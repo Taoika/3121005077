@@ -30,16 +30,27 @@ def ExtractionText(html):
 
     return textList
 
+# 判断文本是否html代码
+def isHtml(text):
+    soup = BeautifulSoup(text, 'html.parser')
+    td_tags = soup.find_all('td')
+    if(len(td_tags)):
+        return True
+    else:
+        return False
+
 # 主函数
 def main():
     path1 = 'D:/资料/学习资料/计算机/软件工程/2023/论文查重程序测试样例/orig.txt'
     path2 = 'D:/资料/学习资料/计算机/软件工程/2023/论文查重程序测试样例/orig_0.8_del.txt'
+    path3 = 'D:/资料/学习资料/计算机/软件工程/2023/论文查重程序测试样例/orig_0.8_add.txt'
 
     original_text1 = ReadFile(path1)
     original_text2 = ReadFile(path2)
+    original_text3 = ReadFile(path3)
 
-    text1 = ExtractionText(original_text1)
-    text2 = ExtractionText(original_text2)
+
+    print(isHtml(original_text2))
 
 if __name__ == "__main__":
     main()
