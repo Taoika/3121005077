@@ -1,6 +1,7 @@
 import jieba
 from bs4 import BeautifulSoup
 import re
+from gensim import corpora
 
 # 分词
 def Participle(text):
@@ -13,17 +14,18 @@ def ReadFile(path):
         text = file.read()
     return text
 
-# 清晰特殊字符 标点符号
-def Clean(phraseArr):
-    # 去除特殊字符和标点符号的正则表达式
-    pattern = r'[\n\s、，。！？：；“”‘’【】『』【】（）【】《》<>"\',.!?;:()【】【】]'
-    # 使用正则表达式替换特殊字符和标点符号为空字符串
-    filtered_list = [re.sub(pattern, '', element) for element in phraseArr]
+# 内容清洗
+def Clean(arr):
+    result = []
+    for item in arr:
+        # 仅匹配中英文
+        if (re.match(u"[a-zA-Z0-9\u4e00-\u9fa5]", item)):
+            result.append(item)
+            return result
+        else:
+            pass
 
-    # 去除空字符串元素
-    filtered_list = [element for element in filtered_list if element]
-
-    return filtered_list
+    return result
 
 # 从html中提取文本
 def ExtractionText(html):
@@ -48,6 +50,15 @@ def IsHtml(text):
     else:
         return False
 
+# 频率计算
+def CalcFrequency(text1List1, textList2):
+    textList=[text1List1, textList2]
+    # 将所有文本中的词语映射到唯一的ID
+    dictionary = corpora.Dictionary(textList)
+    # 创建一个语料库，将文本转化为词袋（bag-of-words）表示
+    corpus = [dictionary.doc2bow(text) for text in textList]
+    return corpus
+
 # 主函数
 def main():
     path1 = 'D:/资料/学习资料/计算机/软件工程/2023/论文查重程序测试样例/orig.txt'
@@ -62,7 +73,7 @@ def main():
     text2 = Participle(ExtractionText(original_text2))
     text3 = Participle(original_text3)
 
-    print(Clean(text2))
+    CalcFrequency(text1, text2)
 
 if __name__ == "__main__":
     main()
