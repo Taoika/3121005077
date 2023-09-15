@@ -80,30 +80,59 @@ def CalcSimilarity(text1, text2):
     # 返回余弦相似度
     return cos_similarity
 
+
 # 获取命令行参数
 def GetArgs():
     # 命令行参数列表
     args = sys.argv
 
-    if len(args) > 2:
-        print("参数1:", args[1])
-        print("参数2:", args[2])
-        return args[1], args[2]
-    elif len(args) < 2:
-        print("请提供两个用于比对的文件路径!")
+    if len(args) > 3:
+        return args[1], args[2], args[3]
+    elif len(args) <= 3:
+        print("请提供两个用于比对的文件路径 以及 一个答案写入的文件路径!")
+        return '', ''
+
+
+# 答案写入
+def writeAnswer(path, sim):
+    judge = '判定为抄袭' if sim > 0.6 else '不认定为抄袭'
+    try:
+        with open(path, 'w') as file:
+            file.write('相似度:' + '%.2f%%' % (sim * 100))
+            file.write('\n' + judge)
+        print(f"成功将答案写入文件")
+    except IOError as e:
+        print(f"写入文件时发生错误：{e}")
 
 # 主函数
 def main():
-
-    path1, path2 = GetArgs()
+    # 参数获取
+    path1, path2, path3 = GetArgs()
+    if path1 == '' or path2 == '' or path3 == '':
+        return
 
     original_text1 = ReadFile(path1)  # 原文
     original_text2 = ReadFile(path2)  # html
 
-    text1 = Participle(original_text1)
-    text2 = Participle(ExtractionText(original_text2))
+    # 清洗
+    if IsHtml(original_text1):
+        text1_pro = ExtractionText(original_text1)
+    else:
+        text1_pro = original_text1
 
-    print((CalcSimilarity(text1, text2)))
+    if IsHtml(original_text2):
+        text2_pro = ExtractionText(original_text2)
+    else:
+        text2_pro = original_text2
+
+    text1 = Participle(text1_pro)
+    text2 = Participle(text2_pro)
+
+    # 相似度 抄袭判定
+    sim = (CalcSimilarity(text1, text2) - 0.5) * 2
+
+    # 答案写入
+    writeAnswer(path3, sim)
 
 if __name__ == "__main__":
     main()
