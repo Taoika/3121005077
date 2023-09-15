@@ -5,38 +5,16 @@ from gensim import corpora, similarities
 import sys
 
 
-# 分词
-def Participle(text):
-    seg_list = jieba.lcut(text)  # 默认是精确模式
-    return (seg_list)
-
-
 # 文件读取
-def ReadFile(path):
+def readFile(path):
     with open(path, 'r', encoding='utf-8') as file:
         text = file.read()
     return text
 
 
-# 内容清洗
-def Clean(arr):
-    result = []
-    for item in arr:
-        # 仅匹配中英文
-        if (re.match(u"[a-zA-Z0-9\u4e00-\u9fa5]", item)):
-            result.append(item)
-            return result
-        else:
-            pass
-
-    return result
-
-
 # 从html中提取文本
-def ExtractionText(html):
-    # 创建Beautiful Soup对象
+def extractionText(html):
     soup = BeautifulSoup(html, 'html.parser')
-    # 提取所有的<td>标签
     td_tags = soup.find_all('td')
     textList = []
     # 提取文本内容并存储
@@ -48,7 +26,7 @@ def ExtractionText(html):
 
 
 # 判断文本是否html代码
-def IsHtml(text):
+def isHtml(text):
     soup = BeautifulSoup(text, 'html.parser')
     td_tags = soup.find_all('td')
     if (len(td_tags)):
@@ -57,27 +35,42 @@ def IsHtml(text):
         return False
 
 
+# 内容清洗
+def Clean(arr):
+    result = []
+    for item in arr:
+        # 仅匹配中英文
+        if (re.match(u"[a-zA-Z0-9\u4e00-\u9fa5]", item)):
+            result.append(item)
+        else:
+            pass
+
+    return result
+
+
+# 分词
+def Participle(text):
+    seg_list = jieba.lcut(text)  # 默认是精确模式
+    return (seg_list)
+
+
 # 频率计算
 def CalcFrequency(text1List1, textList2):
     textList = [text1List1, textList2]
-    # 将所有文本中的词语映射到唯一的ID
+    # 映射到唯一的ID
     dictionary = corpora.Dictionary(textList)
-    # 创建一个语料库，将文本转化为词袋（bag-of-words）表示
+    # 文本转化为词袋（bag-of-words）表示
     corpus = [dictionary.doc2bow(text) for text in textList]
     return dictionary, corpus
 
 
 # 余弦相似度计算
 def CalcSimilarity(text1, text2):
-    # 将文本转化为词袋表示的语料库
     dictionary, corpus = CalcFrequency(text1, text2)
-    # 创建余弦相似度计算对象
     similarity = similarities.Similarity('-Similarity-index', corpus, num_features=len(dictionary))
-    # 将text1转化为词袋表示
     test_corpus_1 = dictionary.doc2bow(text1)
     # 计算余弦相似度
     cos_similarity = similarity[test_corpus_1][1]
-    # 返回余弦相似度
     return cos_similarity
 
 
@@ -104,6 +97,7 @@ def writeAnswer(path, sim):
     except IOError as e:
         print(f"写入文件时发生错误：{e}")
 
+
 # 主函数
 def main():
     # 参数获取
@@ -111,28 +105,31 @@ def main():
     if path1 == '' or path2 == '' or path3 == '':
         return
 
-    original_text1 = ReadFile(path1)  # 原文
-    original_text2 = ReadFile(path2)  # html
+    original_text1 = readFile(path1)  # 原文
+    original_text2 = readFile(path2)  # html
 
-    # 清洗
-    if IsHtml(original_text1):
-        text1_pro = ExtractionText(original_text1)
+    # 提取
+    if isHtml(original_text1):
+        text1_pro = extractionText(original_text1)
     else:
         text1_pro = original_text1
 
-    if IsHtml(original_text2):
-        text2_pro = ExtractionText(original_text2)
+    if isHtml(original_text2):
+        text2_pro = extractionText(original_text2)
     else:
         text2_pro = original_text2
 
-    text1 = Participle(text1_pro)
-    text2 = Participle(text2_pro)
+    # 分词
+    text1 = Clean(Participle(text1_pro))
+    text2 = Clean(Participle(text2_pro))
 
     # 相似度 抄袭判定
-    sim = (CalcSimilarity(text1, text2) - 0.5) * 2
+    sim = (CalcSimilarity(text1, text2))
 
     # 答案写入
     writeAnswer(path3, sim)
+
+    print(sim)
 
 if __name__ == "__main__":
     main()
